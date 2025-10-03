@@ -1,0 +1,17 @@
+# Direnv environment file
+.envrc
+
+# Air / build binaries
+bin/
+
+# Go build artifacts
+*.exe
+*.out
+
+# Dependency directories
+vendor/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
