@@ -7,14 +7,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/likhon22/social/internal/config"
+	"github.com/likhon22/social/internal/store"
 )
 
 type application struct {
-	config config
-}
-
-type config struct {
-	addr string
+	Config *config.AppConfig
+	store  *store.Storage
 }
 
 func (app *application) mount() http.Handler {
@@ -37,13 +36,13 @@ func (app *application) mount() http.Handler {
 func (app *application) serve(mux http.Handler) error {
 
 	srv := &http.Server{
-		Addr:         app.config.addr,
+		Addr:         app.Config.Addr,
 		Handler:      mux,
 		WriteTimeout: time.Second * 30,
 		ReadTimeout:  time.Second * 10,
 		IdleTimeout:  time.Minute,
 	}
 
-	log.Printf("Starting server on %s", app.config.addr)
+	log.Printf("Starting server on %s", app.Config.Addr)
 	return srv.ListenAndServe()
 }
