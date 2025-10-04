@@ -8,6 +8,8 @@ type DbConfig struct {
 }
 
 type AppConfig struct {
-	Addr string
-	DB   *DbConfig
+	Addr    string
+	DB      *DbConfig
+	Version string
+	Env     string
 }

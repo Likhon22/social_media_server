@@ -18,6 +18,8 @@ func main() {
 			MaxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 25),
 			MaxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
+		Version: env.GetString("VERSION", "0.0.1"),
+		Env:     env.GetString("ENV", "development"),
 	}
 	db, err := db.NewDB(*cfg.DB)
 
