@@ -7,6 +7,8 @@ import (
 
 type Posts interface {
 	Create(ctx context.Context, post *Post) error
+	GetAll(ctx context.Context) ([]*Post, error)
+	GetByID(ctx context.Context, id int64) (*Post, error)
 }
 type Users interface {
 	Create(ctx context.Context, user *User) error
