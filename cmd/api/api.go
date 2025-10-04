@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -68,18 +69,18 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	posts := &store.Post{}
 
 	if err := readJSON(w, r, posts); err != nil {
-		writeJSONError(w, r, http.StatusBadRequest, err.Error())
+		app.BadRequestError(w, r, err)
 		return
 	}
 
 	err := app.store.Posts.Create(r.Context(), posts)
 	if err != nil {
 		log.Println(err)
-		writeJSONError(w, r, http.StatusInternalServerError, err.Error())
+		app.StatusInternalServerError(w, r, err)
 		return
 	}
 	if err := writeJSON(w, http.StatusCreated, posts); err != nil {
-		writeJSONError(w, r, http.StatusInternalServerError, "failed to marshal post")
+		app.StatusInternalServerError(w, r, err)
 		return
 	}
 
@@ -90,11 +91,11 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 	posts, err := app.store.Posts.GetAll(r.Context())
 	if err != nil {
 		log.Println(err)
-		writeJSONError(w, r, http.StatusInternalServerError, err.Error())
+		app.BadRequestError(w, r, err)
 		return
 	}
 	if err := writeJSON(w, http.StatusOK, posts); err != nil {
-		writeJSONError(w, r, http.StatusInternalServerError, "failed to marshal posts")
+		app.StatusInternalServerError(w, r, err)
 		return
 	}
 
@@ -103,49 +104,48 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 func (app *application) getPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 	postIDParam := chi.URLParam(r, "postId")
 	if postIDParam == "" {
-		writeJSONError(w, r, http.StatusBadRequest, "post ID is required")
+		app.BadRequestError(w, r, errors.New("postID is needed"))
 		return
 	}
 	postID, err := strconv.ParseInt(postIDParam, 10, 64)
-	if err != nil || postID < 1 {
-		writeJSONError(w, r, http.StatusBadRequest, "invalid post ID")
+	if err != nil {
+		app.BadRequestError(w, r, err)
+		return
+	}
+	if postID < 1 {
+		app.BadRequestError(w, r, errors.New("invalid ID"))
 		return
 	}
 
 	post, err := app.store.Posts.GetByID(r.Context(), postID)
 	if err != nil {
 		log.Println(err)
-		writeJSONError(w, r, http.StatusInternalServerError, "failed to fetch post")
+		app.StatusInternalServerError(w, r, err)
 		return
 	}
 	if post == nil {
-		writeJSONError(w, r, http.StatusNotFound, "post not found")
+		app.BadRequestError(w, r, err)
 		return
 	}
-	log.Println(post)
+
 	if err := writeJSON(w, http.StatusOK, post); err != nil {
-		writeJSONError(w, r, http.StatusInternalServerError, "failed to marshal post")
+		app.StatusInternalServerError(w, r, err)
 	}
 }
 
 func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := &store.User{}
-
-	if err := readJSON(w, r, user); err != nil {
-		writeJSONError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	err := app.store.Users.Create(r.Context(), user)
+	err := readJSON(w, r, user)
 	if err != nil {
-		log.Println(err)
-		writeJSONError(w, r, http.StatusInternalServerError, err.Error())
-		return
+		app.BadRequestError(w, r, err)
 	}
-	if err := writeJSON(w, http.StatusCreated, user); err != nil {
-		writeJSONError(w, r, http.StatusInternalServerError, "failed to marshal user")
-		return
+	err = app.store.Users.Create(r.Context(), user)
+	if err != nil {
+		app.StatusInternalServerError(w, r, err)
+	}
+	if err := writeJSON(w, http.StatusOK, user); err != nil {
+		app.StatusInternalServerError(w, r, err)
 	}
 
 }

@@ -20,18 +20,14 @@ func readJSON[T any](w http.ResponseWriter, r *http.Request, data *T) error {
 	return decoder.Decode(data)
 }
 
-func writeJSONError(w http.ResponseWriter, r *http.Request, status int, message string) error {
+func writeJSONError(w http.ResponseWriter, status int, message string) error {
 	type envelope struct {
 		Error   string `json:"error"`
 		Success bool   `json:"success"`
-		Method  string `json:"method"`
-		URL     string `json:"url"`
 	}
 	env := &envelope{
 		Error:   message,
 		Success: false,
-		Method:  r.Method,
-		URL:     r.URL.Path,
 	}
 	return writeJSON(w, status, env)
 
