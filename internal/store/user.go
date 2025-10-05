@@ -27,3 +27,52 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	}
 	return nil
 }
+
+func (s *UserStore) GetUsers(ctx context.Context) (*[]User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	query := `SELECT id, username, email, created_at, updated_at 
+	          FROM users 
+	          ORDER BY created_at ASC`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []User{}
+
+	for rows.Next() {
+		user := User{}
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &users, nil
+}
+
+func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+	query := `SELECT id, username, email,  created_at, updated_at 
+	          FROM users WHERE email = $1`
+	user := User{}
+
+	err := s.db.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}

@@ -30,7 +30,7 @@ func (app *application) mount() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.HandleFunc("GET /health", app.healthCheckHandler)
-		r.Route("/post", func(r chi.Router) {
+		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.createPostHandler)
 			r.Get("/", app.getPostsHandler)
 
@@ -44,12 +44,14 @@ func (app *application) mount() http.Handler {
 
 		//users
 
-		r.Route("/user", func(r chi.Router) {
+		r.Route("/users", func(r chi.Router) {
 			r.Post("/", app.createUserHandler)
+			r.Get("/", app.getUserHandler)
+			r.Get("/", app.getUserByEmailHandler)
 
 		})
 		//comment
-		r.Route("/comment", func(r chi.Router) {
+		r.Route("/comments", func(r chi.Router) {
 			r.Post("/", app.CreateCommentHandler)
 		})
 	})

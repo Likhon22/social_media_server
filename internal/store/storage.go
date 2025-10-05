@@ -15,6 +15,8 @@ type Posts interface {
 }
 type Users interface {
 	Create(ctx context.Context, user *User) error
+	GetUsers(ctx context.Context) (*[]User, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
 }
 type Comments interface {
 	GetCommentsWithPost(ctx context.Context, postID int64) (*[]Comment, error)
