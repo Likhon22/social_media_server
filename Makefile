@@ -28,3 +28,7 @@ migrate-force:
 # Show current migration version
 migrate-version:
 	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) version
+
+.PHONY: seed
+seed:
+	@bash -c 'source .envrc && go run cmd/migrate/seed/main.go'
