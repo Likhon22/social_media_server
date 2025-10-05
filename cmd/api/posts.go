@@ -23,9 +23,11 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 
 	if err := readJSON(w, r, &payload); err != nil {
 		app.BadRequestError(w, r, err)
+		return
 	}
 	if err := Validate.Struct(payload); err != nil {
 		app.BadRequestError(w, r, err)
+		return
 	}
 	post := &store.Post{
 		Title:   payload.Title,
@@ -92,9 +94,72 @@ func (app *application) getPostByIDHandler(w http.ResponseWriter, r *http.Reques
 	post.Comments = *comments
 	if err != nil {
 		app.StatusInternalServerError(w, r, err)
+		return
 
 	}
 	if err := writeJSON(w, http.StatusOK, post); err != nil {
 		app.StatusInternalServerError(w, r, err)
+		return
 	}
+}
+
+func (app *application) deletePostByIDHandler(w http.ResponseWriter, r *http.Request) {
+	postIDParam := chi.URLParam(r, "postId")
+	if postIDParam == "" {
+		app.BadRequestError(w, r, errors.New("postID is needed"))
+		return
+	}
+	postID, err := strconv.ParseInt(postIDParam, 10, 64)
+	if err != nil {
+		app.BadRequestError(w, r, err)
+		return
+	}
+	if postID < 1 {
+		app.BadRequestError(w, r, errors.New("invalid ID"))
+		return
+	}
+
+	err = app.store.Posts.Delete(r.Context(), postID)
+	if err != nil {
+		log.Println(err)
+		app.StatusInternalServerError(w, r, err)
+		return
+	}
+
+	if err := writeJSON(w, http.StatusOK, " post deleted successfully "); err != nil {
+		app.StatusInternalServerError(w, r, err)
+		return
+	}
+}
+func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
+	posts := store.Post{}
+	postIDParam := chi.URLParam(r, "postId")
+	if postIDParam == "" {
+		app.BadRequestError(w, r, errors.New("postID is needed"))
+		return
+	}
+	postID, err := strconv.ParseInt(postIDParam, 10, 64)
+	if err != nil {
+		app.BadRequestError(w, r, err)
+		return
+	}
+	if postID < 1 {
+		app.BadRequestError(w, r, errors.New("invalid ID"))
+		return
+	}
+	if err := readJSON(w, r, &posts); err != nil {
+		app.StatusInternalServerError(w, r, err)
+		return
+	}
+	if err := app.store.Posts.Update(r.Context(), postID, &posts); err != nil {
+		app.StatusInternalServerError(w, r, err)
+		return
+	}
+	posts.ID = postID
+
+	if err := writeJSON(w, http.StatusOK, &posts); err != nil {
+		app.StatusInternalServerError(w, r, err)
+		return
+	}
+
 }
