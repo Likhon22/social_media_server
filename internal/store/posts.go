@@ -26,6 +26,8 @@ type PostStore struct {
 }
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 	query := `INSERT INTO posts (content, title, tags, user_id) VALUES ($1, $2, $3, $4) RETURNING id, created_at, updated_at`
 	err := s.db.QueryRowContext(ctx, query, post.Content, post.Title, pq.Array(post.Tags), post.UserID).Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
@@ -35,6 +37,8 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 }
 
 func (s *PostStore) GetAll(ctx context.Context) ([]*Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 	query := `SELECT id, content, title, tags, user_id, created_at, updated_at FROM posts ORDER BY created_at DESC`
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
@@ -60,6 +64,8 @@ func (s *PostStore) GetAll(ctx context.Context) ([]*Post, error) {
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 	query := `SELECT id, content, title, tags, user_id, created_at, updated_at FROM posts WHERE id = $1`
 	post := &Post{}
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 	err := s.db.QueryRowContext(ctx, query, id).Scan(&post.ID, &post.Content, &post.Title, pq.Array(&post.Tags), &post.UserID, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -72,7 +78,8 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 
 func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 	query := `DELETE FROM posts WHERE id = $1` // Use ? if MySQL
-
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 	// Execute the query
 	result, err := s.db.ExecContext(ctx, query, postID)
 	if err != nil {
@@ -95,7 +102,8 @@ func (s *PostStore) Update(ctx context.Context, postID int64, post *Post) error 
 	setParts := []string{}
 	args := []interface{}{}
 	i := 1
-
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 	if post.Title != "" {
 		setParts = append(setParts, fmt.Sprintf("title = $%d", i))
 		args = append(args, post.Title)

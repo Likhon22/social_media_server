@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 type Posts interface {
@@ -24,6 +25,10 @@ type Storage struct {
 	Users    Users
 	Comments Comments
 }
+
+var (
+	QueryTimeoutDuration = time.Second * 5
+)
 
 func NewStorage(db *sql.DB) *Storage {
 	return &Storage{
