@@ -15,6 +15,7 @@ type Users interface {
 }
 type Comments interface {
 	GetCommentsWithPost(ctx context.Context, postID int64) (*[]Comment, error)
+	CreateComment(ctx context.Context, comments *Comment) error
 }
 type Storage struct {
 	Posts    Posts

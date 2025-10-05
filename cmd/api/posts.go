@@ -11,34 +11,36 @@ import (
 )
 
 type CreatePostPayload struct {
-	Content string   `json:"content" db:"content" validator:"required,max=1000"`
-	Title   string   `json:"title" db:"title" validator:"required,max=100"`
+	Content string   `json:"content" db:"content" validate:"required,max=1000"`
+	Title   string   `json:"title" db:"title" validate:"required,max=100"`
 	Tags    []string `json:"tags" db:"tags" validate:"required"`
+	UserID  int      `json:"user_id" db:"user_id" validate:"required"`
 }
 
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	var payload CreatePostPayload
+
 	if err := readJSON(w, r, &payload); err != nil {
 		app.BadRequestError(w, r, err)
 	}
 	if err := Validate.Struct(payload); err != nil {
 		app.BadRequestError(w, r, err)
 	}
-	posts := &store.Post{}
-
-	if err := readJSON(w, r, posts); err != nil {
-		app.BadRequestError(w, r, err)
-		return
+	post := &store.Post{
+		Title:   payload.Title,
+		Content: payload.Content,
+		Tags:    payload.Tags,
+		UserID:  int64(payload.UserID),
 	}
 
-	err := app.store.Posts.Create(r.Context(), posts)
+	err := app.store.Posts.Create(r.Context(), post)
 	if err != nil {
 		log.Println(err)
 		app.StatusInternalServerError(w, r, err)
 		return
 	}
-	if err := writeJSON(w, http.StatusCreated, posts); err != nil {
+	if err := writeJSON(w, http.StatusCreated, post); err != nil {
 		app.StatusInternalServerError(w, r, err)
 		return
 	}

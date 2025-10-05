@@ -21,11 +21,13 @@ type CommentStore struct {
 
 func (s *CommentStore) GetCommentsWithPost(ctx context.Context, postID int64) (*[]Comment, error) {
 	query := `
-        SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, c.updated_at, u.id, u.username
-        FROM comments c
-        JOIN users u ON u.id = c.user_id
-        WHERE c.post_id = $1
-        ORDER BY c.created_at DESC
+        SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, c.updated_at,
+       u.id, u.username, u.email, u.created_at, u.updated_at
+    FROM comments c
+    JOIN users u ON u.id = c.user_id
+  WHERE c.post_id = $1
+   ORDER BY c.created_at DESC
+
     `
 
 	var comments []Comment
@@ -40,7 +42,6 @@ func (s *CommentStore) GetCommentsWithPost(ctx context.Context, postID int64) (*
 		var comment Comment
 		var user User
 
-		// Scan columns into Comment + nested User
 		err := rows.Scan(
 			&comment.ID,
 			&comment.PostID,
@@ -50,7 +51,11 @@ func (s *CommentStore) GetCommentsWithPost(ctx context.Context, postID int64) (*
 			&comment.UpdatedAt,
 			&user.ID,
 			&user.Username,
+			&user.Email,
+			&user.CreatedAt,
+			&user.UpdatedAt,
 		)
+
 		if err != nil {
 			return nil, err
 		}
@@ -64,4 +69,20 @@ func (s *CommentStore) GetCommentsWithPost(ctx context.Context, postID int64) (*
 	}
 
 	return &comments, nil
+}
+
+func (s *CommentStore) CreateComment(ctx context.Context, comment *Comment) error {
+	query := `
+        INSERT INTO comments (post_id, user_id, content, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+        RETURNING id
+    `
+
+	// If you want to get the generated ID
+	err := s.db.QueryRowContext(ctx, query, comment.PostID, comment.UserID, comment.Content).Scan(&comment.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
