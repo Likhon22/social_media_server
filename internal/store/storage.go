@@ -13,14 +13,19 @@ type Posts interface {
 type Users interface {
 	Create(ctx context.Context, user *User) error
 }
+type Comments interface {
+	GetCommentsWithPost(ctx context.Context, postID int64) (*[]Comment, error)
+}
 type Storage struct {
-	Posts Posts
-	Users Users
+	Posts    Posts
+	Users    Users
+	Comments Comments
 }
 
 func NewStorage(db *sql.DB) *Storage {
 	return &Storage{
-		Posts: &PostStore{db: db},
-		Users: &UserStore{db: db},
+		Posts:    &PostStore{db: db},
+		Users:    &UserStore{db: db},
+		Comments: &CommentStore{db: db},
 	}
 }

@@ -22,4 +22,9 @@ migrate-down:
 
 # Force set the migration version
 migrate-force:
-	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) force $(filter-out $@,$(MAKECMDGOALS))
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) force $(VERSION)
+
+
+# Show current migration version
+migrate-version:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) version

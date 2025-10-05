@@ -14,6 +14,7 @@ type Post struct {
 	Title     string    `json:"title" db:"title"`
 	Tags      []string  `json:"tags" db:"tags"`
 	UserID    int64     `json:"user_id" db:"user_id"`
+	Comments  []Comment `json:"comments" db:"comments"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }

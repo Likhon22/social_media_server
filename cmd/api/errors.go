@@ -19,3 +19,13 @@ func (app *application) BadRequestError(w http.ResponseWriter, r *http.Request, 
 	log.Printf("bad request error: %s path %s method: %s", msg, r.Method, r.URL.Path)
 	writeJSONError(w, http.StatusInternalServerError, msg)
 }
+func (app *application) NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
+	var msg string
+	if err != nil {
+		msg = err.Error()
+	} else {
+		msg = "not found"
+	}
+	log.Printf("error: %s path %s method: %s", msg, r.Method, r.URL.Path)
+	writeJSONError(w, http.StatusNotFound, "not found")
+}
