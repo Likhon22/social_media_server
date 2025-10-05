@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/likhon22/social/internal/store"
@@ -66,6 +67,7 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 
 func (app *application) getPostByIDHandler(w http.ResponseWriter, r *http.Request) {
 	postIDParam := chi.URLParam(r, "postId")
+
 	if postIDParam == "" {
 		app.BadRequestError(w, r, errors.New("postID is needed"))
 		return
@@ -79,23 +81,43 @@ func (app *application) getPostByIDHandler(w http.ResponseWriter, r *http.Reques
 		app.BadRequestError(w, r, errors.New("invalid ID"))
 		return
 	}
+	var wg sync.WaitGroup
+	errCh := make(chan error, 2)
+	var post *store.Post
+	var comments []store.Comment
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		p, err := app.store.Posts.GetByID(r.Context(), postID)
+		if err != nil {
 
-	post, err := app.store.Posts.GetByID(r.Context(), postID)
-	if err != nil {
-		log.Println(err)
-		app.StatusInternalServerError(w, r, err)
-		return
-	}
-	if post == nil {
-		app.NotFoundError(w, r, err)
-		return
-	}
-	comments, err := app.store.Comments.GetCommentsWithPost(r.Context(), postID)
-	post.Comments = *comments
-	if err != nil {
-		app.StatusInternalServerError(w, r, err)
-		return
+			errCh <- err
+			return
+		}
 
+		post = p
+
+	}()
+	go func() {
+		defer wg.Done()
+		c, err := app.store.Comments.GetCommentsWithPost(r.Context(), postID)
+
+		if err != nil {
+			errCh <- err
+			return
+
+		}
+		comments = *c
+
+	}()
+	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		app.StatusInternalServerError(w, r, err)
+
+	}
+	if post != nil {
+		post.Comments = comments // assign after both are fetched
 	}
 	if err := writeJSON(w, http.StatusOK, post); err != nil {
 		app.StatusInternalServerError(w, r, err)
