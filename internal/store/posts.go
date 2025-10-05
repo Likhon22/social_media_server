@@ -151,3 +151,4 @@ func (s *PostStore) Update(ctx context.Context, postID int64, post *Post) error 
 
 	return nil
 }
+
