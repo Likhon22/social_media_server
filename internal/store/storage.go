@@ -15,10 +15,11 @@ type Posts interface {
 	GetUserFeed(ctx context.Context, userId int64, fq PaginatedFeedQuery) (*[]PostWithMetaData, error)
 }
 type Users interface {
-	Create(ctx context.Context, user *User) error
+	Create(ctx context.Context, tx *sql.Tx, user *User) error
 	GetUsers(ctx context.Context) (*[]User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserById(ctx context.Context, id int64) (*User, error)
+	CreateAndInvite(ctx context.Context, user *User, token string, invitationExp time.Duration) error
 }
 type Comments interface {
 	GetCommentsWithPost(ctx context.Context, postID int64) (*[]Comment, error)
@@ -46,4 +47,19 @@ func NewStorage(db *sql.DB) *Storage {
 		Comments:  &CommentStore{db: db},
 		Followers: &FollowerStore{db: db},
 	}
+}
+
+func withTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+
+	}
+	if err := fn(tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
+	}
+	return tx.Commit()
 }

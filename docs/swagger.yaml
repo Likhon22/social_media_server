@@ -4,6 +4,15 @@ definitions:
       user_id:
         type: integer
     type: object
+  main.RegisterUserPayload:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
   store.Comment:
     properties:
       content:
@@ -20,6 +29,8 @@ definitions:
         $ref: '#/definitions/store.User'
       user_id:
         type: integer
+    type: object
+  store.Password:
     type: object
   store.Post:
     properties:
@@ -55,7 +66,7 @@ definitions:
       id:
         type: integer
       password:
-        type: string
+        $ref: '#/definitions/store.Password'
       updated_at:
         type: string
       username:
@@ -224,6 +235,33 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Get all users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user in the system
+      parameters:
+      - description: User information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.RegisterUserPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered
+          schema:
+            $ref: '#/definitions/store.User'
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Register a new user
       tags:
       - Users
   /users/{userEmail}:

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/likhon22/social/internal/config"
 	"github.com/likhon22/social/internal/db"
 	"github.com/likhon22/social/internal/env"
@@ -29,6 +31,9 @@ func main() {
 		},
 		Version: env.GetString("VERSION", "0.0.1"),
 		Env:     env.GetString("ENV", "development"),
+		Mail: &config.MailConfig{
+			Exp: time.Hour * 24 * 3,
+		},
 	}
 	//logger
 

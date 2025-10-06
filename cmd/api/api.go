@@ -52,9 +52,9 @@ func (app *application) mount() http.Handler {
 		//users
 
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/", app.createUserHandler)
+			r.Post("/", app.registerUserHandler)
 			r.Get("/", app.getUserHandler)
-
+			r.Put("/activate/{token}", app.activateUserHandler)
 			r.Route("/{userId}", func(r chi.Router) {
 				r.Use(app.UserIdContextMiddleware)
 				r.Get("/", app.getUserByIdHandler)

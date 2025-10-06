@@ -18,10 +18,14 @@ func main() {
 		MaxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 	}
 	conn, err := db.NewDB(*dbConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
 	store := store.NewStorage(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.Seed(*store)
+	db.Seed(*store, conn)
 
 }

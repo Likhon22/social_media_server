@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -10,11 +11,12 @@ import (
 	"github.com/likhon22/social/internal/store"
 )
 
-func Seed(store store.Storage) {
+func Seed(store store.Storage, db *sql.DB) {
 	ctx := context.Background()
 	users := generateUsers(100)
+	tx, _ := db.BeginTx(ctx, nil)
 	for _, user := range users {
-		if err := store.Users.Create(ctx, user); err != nil {
+		if err := store.Users.Create(ctx, tx, user); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -44,10 +46,17 @@ func generateUsers(num int) []*store.User {
 	users := make([]*store.User, num)
 
 	for i := 0; i < num; i++ {
+		pass := gofakeit.Password(true, true, true, true, false, 10)
+
+		var password store.Password
+		if err := password.Set(pass); err != nil {
+			panic(err)
+		}
+
 		users[i] = &store.User{
 			Username:  gofakeit.Username(),
 			Email:     gofakeit.Email(),
-			Password:  gofakeit.Password(true, true, true, true, false, 10),
+			Password:  password, // ✅ hashed and ready
 			CreatedAt: gofakeit.DateRange(time.Now().AddDate(-1, 0, 0), time.Now()),
 			UpdatedAt: time.Now(),
 		}

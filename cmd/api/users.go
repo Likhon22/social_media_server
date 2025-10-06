@@ -16,47 +16,6 @@ type contextKey string
 
 const userIDKey contextKey = "userID"
 
-type CreateUserPayload struct {
-	Username string `json:"username" db:"username" validator:"required,max=100"`
-	Password string `json:"password" db:"password" validator:"required,max=22"`
-	Email    string `json:"email" db:"email" validator:"required,max=30"`
-}
-
-//	@Summary		Create a new user
-//	@Description	Registers a new user in the system
-//	@Tags			Users
-//	@Accept			json
-//	@Produce		json
-//	@Param			user	body		CreateUserPayload	true	"User information"
-//	@Success		200		{object}	store.User
-//	@Failure		400		{object}	error
-//	@Failure		500		{object}	error
-//	@Router			/users [post]
-
-func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
-	var payload CreateUserPayload
-	if err := readJSON(w, r, &payload); err != nil {
-		app.BadRequestError(w, r, err)
-	}
-	if err := Validate.Struct(payload); err != nil {
-		app.BadRequestError(w, r, err)
-	}
-	user := &store.User{
-		Username: payload.Username,
-		Email:    payload.Email,
-		Password: payload.Password,
-	}
-
-	err := app.store.Users.Create(r.Context(), user)
-	if err != nil {
-		app.StatusInternalServerError(w, r, err)
-	}
-	if err := writeJSON(w, http.StatusOK, user); err != nil {
-		app.StatusInternalServerError(w, r, err)
-	}
-
-}
-
 // @Summary		Get all users
 // @Description	Retrieves a list of all registered users
 // @Tags			Users
