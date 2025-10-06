@@ -17,8 +17,14 @@ type Post struct {
 	Tags      []string  `json:"tags" db:"tags"`
 	UserID    int64     `json:"user_id" db:"user_id"`
 	Comments  []Comment `json:"comments" db:"comments"`
+	User      User      `json:"Users" db:"Users"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type PostWithMetaData struct {
+	Post
+	CommentCount int `json:"comments_count"`
 }
 
 type PostStore struct {
@@ -152,31 +158,63 @@ func (s *PostStore) Update(ctx context.Context, postID int64, post *Post) error 
 	return nil
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userId int64) (*[]*Post, error) {
+func (s *PostStore) GetUserFeed(ctx context.Context, userId int64, fq PaginatedFeedQuery) (*[]PostWithMetaData, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
-	query := `SELECT id, content, title, tags, user_id, created_at, updated_at
-FROM posts
-WHERE user_id = $1
-ORDER BY created_at DESC;
-`
-	rows, err := s.db.QueryContext(ctx, query, userId)
+
+	query := `
+	SELECT 
+	    p.id,
+	    p.user_id,
+	    p.title,
+	    p.content,
+	    p.created_at,
+	    p.updated_at,
+	    p.tags,
+	    u.username,
+	    COUNT(c.id) AS comments_count
+	FROM posts p
+	LEFT JOIN comments c ON c.post_id = p.id
+	LEFT JOIN users u ON u.id = p.user_id
+	WHERE p.user_id = $1
+	   OR p.user_id IN (
+	       SELECT f.follower_id
+	       FROM followers f
+	       WHERE f.user_id = $1
+	   )
+	GROUP BY p.id, u.username
+	ORDER BY p.created_at ` + fq.Sort + ` LIMIT $2 OFFSET $3;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, userId, fq.Limit, fq.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	posts := []*Post{}
+	posts := []PostWithMetaData{}
 	for rows.Next() {
-		post := &Post{}
-		err := rows.Scan(&post.ID, &post.Content, &post.Title, pq.Array(&post.Tags), &post.UserID, &post.CreatedAt, &post.UpdatedAt)
+		post := PostWithMetaData{}
+		err := rows.Scan(
+			&post.ID,
+			&post.UserID,
+			&post.Title,
+			&post.Content,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+			pq.Array(&post.Tags),
+			&post.User.Username, // store username in embedded User struct
+			&post.CommentCount,
+		)
 		if err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
 	}
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return &posts, nil
 }
