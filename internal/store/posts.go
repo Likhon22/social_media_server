@@ -152,3 +152,31 @@ func (s *PostStore) Update(ctx context.Context, postID int64, post *Post) error 
 	return nil
 }
 
+func (s *PostStore) GetUserFeed(ctx context.Context, userId int64) (*[]*Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+	query := `SELECT id, content, title, tags, user_id, created_at, updated_at
+FROM posts
+WHERE user_id = $1
+ORDER BY created_at DESC;
+`
+	rows, err := s.db.QueryContext(ctx, query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*Post{}
+	for rows.Next() {
+		post := &Post{}
+		err := rows.Scan(&post.ID, &post.Content, &post.Title, pq.Array(&post.Tags), &post.UserID, &post.CreatedAt, &post.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return &posts, nil
+}

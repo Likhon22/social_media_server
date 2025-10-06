@@ -12,6 +12,7 @@ type Posts interface {
 	GetByID(ctx context.Context, id int64) (*Post, error)
 	Delete(ctx context.Context, postID int64) error
 	Update(ctx context.Context, postID int64, post *Post) error
+	GetUserFeed(ctx context.Context, userId int64) (*[]*Post, error)
 }
 type Users interface {
 	Create(ctx context.Context, user *User) error
