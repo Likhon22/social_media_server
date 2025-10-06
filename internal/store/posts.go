@@ -163,30 +163,40 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userId int64, fq PaginatedF
 	defer cancel()
 
 	query := `
-	SELECT 
-	    p.id,
-	    p.user_id,
-	    p.title,
-	    p.content,
-	    p.created_at,
-	    p.updated_at,
-	    p.tags,
-	    u.username,
-	    COUNT(c.id) AS comments_count
-	FROM posts p
-	LEFT JOIN comments c ON c.post_id = p.id
-	LEFT JOIN users u ON u.id = p.user_id
-	WHERE p.user_id = $1
-	   OR p.user_id IN (
-	       SELECT f.follower_id
-	       FROM followers f
-	       WHERE f.user_id = $1
-	   )
-	GROUP BY p.id, u.username
-	ORDER BY p.created_at ` + fq.Sort + ` LIMIT $2 OFFSET $3;
-	`
+SELECT 
+    p.id,
+    p.user_id,
+    p.title,
+    p.content,
+    p.created_at,
+    p.updated_at,
+    p.tags,
+    u.username,
+    COUNT(c.id) AS comments_count
+FROM posts p
+LEFT JOIN comments c ON c.post_id = p.id
+LEFT JOIN users u ON u.id = p.user_id
+WHERE (p.user_id = $1 OR p.user_id IN (
+    SELECT f.follower_id
+    FROM followers f
+    WHERE f.user_id = $1
+))
+`
 
-	rows, err := s.db.QueryContext(ctx, query, userId, fq.Limit, fq.Offset)
+	args := []interface{}{userId}
+
+	// Add search filter only if search is provided
+	if fq.Search != "" {
+		query += " AND (p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')"
+		args = append(args, fq.Search)
+	}
+
+	query += fmt.Sprintf(" GROUP BY p.id, u.username ORDER BY p.created_at %s LIMIT $%d OFFSET $%d",
+		fq.Sort, len(args)+1, len(args)+2)
+
+	args = append(args, fq.Limit, fq.Offset)
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +213,7 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userId int64, fq PaginatedF
 			&post.CreatedAt,
 			&post.UpdatedAt,
 			pq.Array(&post.Tags),
-			&post.User.Username, // store username in embedded User struct
+			&post.User.Username,
 			&post.CommentCount,
 		)
 		if err != nil {
