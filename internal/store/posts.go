@@ -31,6 +31,16 @@ type PostStore struct {
 	db *sql.DB
 }
 
+// @Summary		Create a new post
+// @Description	Creates a new post
+// @Tags			Posts
+// @Accept			json
+// @Produce		json
+// @Param			post	body		store.Post	true	"Post information"
+// @Success		201		{object}	store.Post
+// @Failure		400		{object}	error
+// @Failure		500		{object}	error
+// @Router			/posts [post]
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -42,6 +52,14 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
+// @Summary		Get all posts
+// @Description	Retrieves a list of all posts
+// @Tags			Posts
+// @Produce		json
+// @Success		200	{array}		store.Post
+// @Failure		400	{object}	error
+// @Failure		500	{object}	error
+// @Router			/posts [get]
 func (s *PostStore) GetAll(ctx context.Context) ([]*Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -67,6 +85,16 @@ func (s *PostStore) GetAll(ctx context.Context) ([]*Post, error) {
 	return posts, nil
 }
 
+// @Summary		Get a post by ID
+// @Description	Retrieves a post and its comments by post ID
+// @Tags			Posts
+// @Produce		json
+// @Param			postId	path		int	true	"Post ID"
+// @Success		200		{object}	store.Post
+// @Failure		400		{object}	error
+// @Failure		404		{object}	error
+// @Failure		500		{object}	error
+// @Router			/posts/{postId} [get]
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 	query := `SELECT id, content, title, tags, user_id, created_at, updated_at FROM posts WHERE id = $1`
 	post := &Post{}
@@ -82,6 +110,15 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 	return post, nil
 }
 
+// @Summary		Delete a post by ID
+// @Description	Deletes a post by its ID
+// @Tags			Posts
+// @Produce		json
+// @Param			postId	path		int		true	"Post ID"
+// @Success		200		{string}	string	"post deleted successfully"
+// @Failure		400		{object}	error
+// @Failure		500		{object}	error
+// @Router			/posts/{postId} [delete]
 func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 	query := `DELETE FROM posts WHERE id = $1` // Use ? if MySQL
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -104,6 +141,17 @@ func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 	return nil
 }
 
+// @Summary		Update a post
+// @Description	Updates a post's content, title, or tags by post ID
+// @Tags			Posts
+// @Accept			json
+// @Produce		json
+// @Param			postId	path		int			true	"Post ID"
+// @Param			post	body		store.Post	true	"Post data to update"
+// @Success		200		{object}	store.Post
+// @Failure		400		{object}	error
+// @Failure		500		{object}	error
+// @Router			/posts/{postId} [patch]
 func (s *PostStore) Update(ctx context.Context, postID int64, post *Post) error {
 	setParts := []string{}
 	args := []interface{}{}

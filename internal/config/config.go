@@ -12,4 +12,5 @@ type AppConfig struct {
 	DB      *DbConfig
 	Version string
 	Env     string
+	ApiURL  string
 }

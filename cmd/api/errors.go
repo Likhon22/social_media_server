@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"net/http"
 )
 
 func (app *application) StatusInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
-	log.Printf("internal server error: %s path %s method: %s", err.Error(), r.Method, r.URL.Path)
+
+	app.logger.Errorw("internal server ", "error", err.Error(), "method", r.Method, "URL", r.URL.Path)
 	writeJSONError(w, http.StatusInternalServerError, "something happen on the server")
 }
 func (app *application) BadRequestError(w http.ResponseWriter, r *http.Request, err error) {
@@ -16,7 +16,8 @@ func (app *application) BadRequestError(w http.ResponseWriter, r *http.Request, 
 	} else {
 		msg = "bad request"
 	}
-	log.Printf("bad request error: %s path %s method: %s", msg, r.Method, r.URL.Path)
+
+	app.logger.Errorw("bad request", "error", err.Error(), "method", r.Method, "URL", r.URL.Path)
 	writeJSONError(w, http.StatusInternalServerError, msg)
 }
 func (app *application) NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
@@ -26,6 +27,7 @@ func (app *application) NotFoundError(w http.ResponseWriter, r *http.Request, er
 	} else {
 		msg = "not found"
 	}
-	log.Printf("error: %s path %s method: %s", msg, r.Method, r.URL.Path)
+
+	app.logger.Errorw("not found", "error", msg, "method", r.Method, "URL", r.URL.Path)
 	writeJSONError(w, http.StatusNotFound, "not found")
 }

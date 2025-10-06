@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -9,11 +9,16 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/likhon22/social/internal/config"
 	"github.com/likhon22/social/internal/store"
+	"go.uber.org/zap"
+
+	"github.com/likhon22/social/docs" //this is important to generate docs
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type application struct {
 	Config *config.AppConfig
 	store  *store.Storage
+	logger *zap.SugaredLogger
 }
 
 func (app *application) mount() http.Handler {
@@ -30,6 +35,8 @@ func (app *application) mount() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.HandleFunc("GET /health", app.healthCheckHandler)
+		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.Config.Addr)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.createPostHandler)
 			r.Get("/", app.getPostsHandler)
@@ -71,6 +78,9 @@ func (app *application) mount() http.Handler {
 }
 func (app *application) serve(mux http.Handler) error {
 
+	docs.SwaggerInfo.Version = app.Config.Version
+	docs.SwaggerInfo.Host = app.Config.ApiURL
+	docs.SwaggerInfo.BasePath = "/v1"
 	srv := &http.Server{
 		Addr:         app.Config.Addr,
 		Handler:      mux,
@@ -79,6 +89,6 @@ func (app *application) serve(mux http.Handler) error {
 		IdleTimeout:  time.Minute,
 	}
 
-	log.Printf("Starting server on %s", app.Config.Addr)
+	app.logger.Infow("server has started", "addr", app.Config.Addr)
 	return srv.ListenAndServe()
 }

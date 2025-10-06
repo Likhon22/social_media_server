@@ -22,6 +22,17 @@ type CreateUserPayload struct {
 	Email    string `json:"email" db:"email" validator:"required,max=30"`
 }
 
+//	@Summary		Create a new user
+//	@Description	Registers a new user in the system
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		CreateUserPayload	true	"User information"
+//	@Success		200		{object}	store.User
+//	@Failure		400		{object}	error
+//	@Failure		500		{object}	error
+//	@Router			/users [post]
+
 func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreateUserPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -46,6 +57,14 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 
 }
 
+// @Summary		Get all users
+// @Description	Retrieves a list of all registered users
+// @Tags			Users
+// @Produce		json
+// @Success		200	{array}		store.User
+// @Failure		400	{object}	error
+// @Failure		500	{object}	error
+// @Router			/users [get]
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	users, err := app.store.Users.GetUsers(r.Context())
 	if err != nil {
@@ -59,6 +78,16 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary		Get a user by email
+// @Description	Retrieves a single user by their email
+// @Tags			Users
+// @Produce		json
+// @Param			userEmail	path		int	true	"User Email"
+// @Success		200			{object}	store.User
+// @Failure		400			{object}	error
+// @Failure		404			{object}	error
+// @Failure		500			{object}	error
+// @Router			/users/{userEmail} [get]
 func (app *application) getUserByEmailHandler(w http.ResponseWriter, r *http.Request) {
 	userEmailParam := r.URL.Query().Get("email")
 
@@ -76,6 +105,17 @@ func (app *application) getUserByEmailHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 }
+
+// @Summary		Get a user by ID
+// @Description	Retrieves a single user by their ID
+// @Tags			Users
+// @Produce		json
+// @Param			userId	path		int	true	"User ID"
+// @Success		200		{object}	store.User
+// @Failure		400		{object}	error
+// @Failure		404		{object}	error
+// @Failure		500		{object}	error
+// @Router			/users/{userId} [get]
 func (app *application) getUserByIdHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 	if err := writeJSON(w, http.StatusOK, user); err != nil {
@@ -88,6 +128,18 @@ type FollowUser struct {
 	UserId int64 `json:"user_id"`
 }
 
+// @Summary		Follow a user
+// @Description	Allows the authenticated user to follow another user
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param			userId	path		int			true	"User ID to follow"
+// @Param			payload	body		FollowUser	true	"Authenticated user info (if needed)"
+// @Success		200		{string}	string		"you followed successfully"
+// @Failure		400		{object}	error
+// @Failure		409		{object}	error	"you already followed"
+// @Failure		500		{object}	error
+// @Router			/users/{userId}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	follower := getUserFromContext(r)
 
@@ -115,6 +167,17 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, "you followed successfully")
 }
 
+// @Summary		Unfollow a user
+// @Description	Allows the authenticated user to unfollow another user
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param			userId	path		int			true	"User ID to unfollow"
+// @Param			payload	body		FollowUser	false	"Optional payload"
+// @Success		200		{string}	string		"you unfollowed successfully"
+// @Failure		400		{object}	error
+// @Failure		500		{object}	error
+// @Router			/users/{userId}/unfollow [put]
 func (app *application) unFollowUserHandler(w http.ResponseWriter, r *http.Request) {
 	unFollower := getUserFromContext(r)
 	var payload FollowUser
