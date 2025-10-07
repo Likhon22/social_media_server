@@ -133,7 +133,7 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 // @Produce		json
 // @Param			userId	path		int			true	"User ID to unfollow"
 // @Param			payload	body		FollowUser	false	"Optional payload"
-// @Success		200		{string}	string		"you unfollowed successfully"
+// @Success		204		{string}	string		"you unfollowed successfully"
 // @Failure		400		{object}	error
 // @Failure		500		{object}	error
 // @Router			/users/{userId}/unfollow [put]
@@ -153,6 +153,26 @@ func (app *application) unFollowUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	writeJSON(w, http.StatusOK, "you unfollowed successfully")
+}
+
+// activate user
+
+// @Summary		activate a user
+// @Description	Allows the  user to activate himself
+// @Tags			Users
+// @Accept			json
+// @Produce		json
+// @Param			token	path		string	true	"Token to verify"
+// @Success		200		{string}	string	"you activate your account successfully"
+// @Failure		400		{object}	error
+// @Failure		500		{object}	error
+// @Router			/activate/{token} [put]
+func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if err := app.store.Users.Activate(r.Context(), token, app.Config.Mail.Exp); err != nil {
+		app.BadRequestError(w, r, err)
+		return
+	}
 }
 
 // user middleware

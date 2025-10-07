@@ -1,0 +1,12 @@
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+docs/
+scripts/
+bin/
+.air.toml
+.envrc
+Makefile
+*.md

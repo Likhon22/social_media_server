@@ -138,3 +138,29 @@ func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token 
 	return nil
 
 }
+
+func (s *UserStore) Activate(ctx context.Context, token string, exp time.Duration) error {
+
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		_, err := s.getUserFromInvitation(ctx, tx, token, exp)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (s *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration) (*User, error) {
+	// query := `SELECT u.id,u.username,u.email,u.created_at,u.is_active FROM users u JOIN user_invitations ui on u.id=u.user_id
+	// WHERE ui.token= $1 AND ui.expiry > $2`
+	// hash := sha256.Sum256([]byte(token))
+	// hashToken := hex.EncodeToString(hash[:])
+	// ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	// defer cancel()
+	user := &User{}
+	// err := tx.QueryRowContext(ctx, query, hashToken, user)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return user, nil
+}

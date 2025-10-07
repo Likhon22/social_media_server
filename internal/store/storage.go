@@ -20,6 +20,7 @@ type Users interface {
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserById(ctx context.Context, id int64) (*User, error)
 	CreateAndInvite(ctx context.Context, user *User, token string, invitationExp time.Duration) error
+	Activate(ctx context.Context, token string, exp time.Duration) error
 }
 type Comments interface {
 	GetCommentsWithPost(ctx context.Context, postID int64) (*[]Comment, error)

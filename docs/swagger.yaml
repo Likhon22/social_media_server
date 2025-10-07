@@ -84,6 +84,33 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Swagger GoSocialMedia API
 paths:
+  /activate/{token}:
+    put:
+      consumes:
+      - application/json
+      description: Allows the  user to activate himself
+      parameters:
+      - description: Token to verify
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: you activate your account successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: activate a user
+      tags:
+      - Users
   /posts:
     get:
       description: Retrieves a list of all posts
@@ -375,7 +402,7 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "204":
           description: you unfollowed successfully
           schema:
             type: string
