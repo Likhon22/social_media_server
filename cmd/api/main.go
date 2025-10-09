@@ -6,6 +6,7 @@ import (
 	"github.com/likhon22/social/internal/config"
 	"github.com/likhon22/social/internal/db"
 	"github.com/likhon22/social/internal/env"
+	"github.com/likhon22/social/internal/mailer"
 	"github.com/likhon22/social/internal/store"
 	"go.uber.org/zap"
 )
@@ -33,6 +34,10 @@ func main() {
 		Env:     env.GetString("ENV", "development"),
 		Mail: &config.MailConfig{
 			Exp: time.Hour * 24 * 3,
+			MailGunConfig: mailer.MailGunMailer{
+				APIKey:    env.GetString("MAILAPIKEY", "apikey"),
+				FromEmail: env.GetString("MAILFROM", "test@sandbox4b7c75e350f94c55b3e2b4d065bb126b.mailgun.org"),
+			},
 		},
 	}
 	//logger

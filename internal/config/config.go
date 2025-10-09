@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/likhon22/social/internal/mailer"
+)
 
 type DbConfig struct {
 	Addr         string
@@ -16,8 +20,10 @@ type AppConfig struct {
 	Env     string
 	ApiURL  string
 	Mail    *MailConfig
+	Mailer  mailer.Client
 }
 
 type MailConfig struct {
-	Exp time.Duration
+	Exp           time.Duration
+	MailGunConfig mailer.MailGunMailer
 }

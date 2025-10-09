@@ -18,7 +18,7 @@ func (app *application) BadRequestError(w http.ResponseWriter, r *http.Request, 
 	}
 
 	app.logger.Errorw("bad request", "error", err.Error(), "method", r.Method, "URL", r.URL.Path)
-	writeJSONError(w, http.StatusInternalServerError, msg)
+	writeJSONError(w, http.StatusBadRequest, msg)
 }
 func (app *application) NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 	var msg string

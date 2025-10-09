@@ -615,6 +615,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "is_active": {
+                    "type": "boolean"
+                },
                 "password": {
                     "$ref": "#/definitions/store.Password"
                 },

@@ -22,7 +22,9 @@ services:
     profiles: ["tools"]
   backend:
     build:
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/Dockerfile.dev
+
     container_name: backend
     ports:
       - "5000:5000"

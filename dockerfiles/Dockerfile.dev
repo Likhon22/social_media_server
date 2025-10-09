@@ -1,8 +1,8 @@
 FROM golang:1.25
 
 # Install tools with correct repositories
-RUN go install github.com/air-verse/air@latest
-RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN go install github.com/air-verse/air@latest && \
+    go install github.com/swaggo/swag/cmd/swag@latest
 
 WORKDIR /app
 
